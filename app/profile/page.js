@@ -38,10 +38,15 @@ export default function ProfilePage() {
     router.push('/');
   }
 
-  async function handleSaveSettings(e) {
+async function handleSaveSettings(e) {
     e.preventDefault();
     setSaveMsg('');
     if (newNickname.trim() && newNickname !== nickname) {
+      const { data: existing } = await supabase.from('profiles').select('id').eq('nickname', newNickname.trim()).neq('id', user.id).maybeSingle();
+      if (existing) {
+        setSaveMsg('Это имя уже занято, выбери другое');
+        return;
+      }
       await supabase.from('profiles').upsert({ id: user.id, nickname: newNickname.trim() });
       setNickname(newNickname.trim());
     }
