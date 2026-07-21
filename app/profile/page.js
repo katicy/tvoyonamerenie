@@ -42,7 +42,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaveMsg('');
     if (newNickname.trim() && newNickname !== nickname) {
-      await supabase.from('profiles').update({ nickname: newNickname.trim() }).eq('id', user.id);
+      await supabase.from('profiles').upsert({ id: user.id, nickname: newNickname.trim() });
       setNickname(newNickname.trim());
     }
     if (newPassword.trim()) {
