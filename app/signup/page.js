@@ -19,6 +19,10 @@ export default function SignupPage() {
       setError('Заполни все поля');
       return;
     }
+    if (password.length < 8 || !/[a-zA-Zа-яА-Я]/.test(password) || !/[0-9]/.test(password)) {
+      setError('Пароль должен быть не короче 8 символов и содержать буквы и цифры');
+      return;
+    }
     setLoading(true);
 
     const { data: existing } = await supabase.from('profiles').select('id').eq('nickname', nickname.trim()).maybeSingle();
@@ -48,7 +52,7 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit}>
         <input className="field" type="text" placeholder="Имя (как будут видеть другие)" value={nickname} onChange={e => setNickname(e.target.value)} />
         <input className="field" type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input className="field" type="password" placeholder="Пароль (минимум 6 символов)" value={password} onChange={e => setPassword(e.target.value)} />
+        <input className="field" type="password" placeholder="Пароль (минимум 8 символов, буквы и цифры)" value={password} onChange={e => setPassword(e.target.value)} />
         {error && <p className="error-text">{error}</p>}
         <button className="btn-brass" type="submit" disabled={loading}>{loading ? 'Создаём...' : 'Зарегистрироваться'}</button>
       </form>
