@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -9,9 +9,13 @@ export default function ProfilePage() {
   const [nickname, setNickname] = useState('');
   const [newNickname, setNewNickname] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [wishes, setWishes] = useState([]);
+  const [showAllWishes, setShowAllWishes] = useState(false);
   const [topicsCount, setTopicsCount] = useState(0);
   const [saveMsg, setSaveMsg] = useState('');
+  const fileInputRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -22,9 +26,10 @@ export default function ProfilePage() {
   }, []);
 
   async function loadAll(userId) {
-    const { data: profile } = await supabase.from('profiles').select('nickname').eq('id', userId).single();
+    const { data: profile } = await supabase.from('profiles').select('nickname, avatar_url').eq('id', userId).single();
     setNickname(profile?.nickname || 'Аноним');
     setNewNickname(profile?.nickname || '');
+    setAvatarUrl(profile?.avatar_url || '');
 
     const { data: myWishes } = await supabase.from('wishes').select('*').eq('user_id', userId).order('created_at', { ascending: false });
     setWishes(myWishes || []);
@@ -38,7 +43,25 @@ export default function ProfilePage() {
     router.push('/');
   }
 
-async function handleSaveSettings(e) {
+  async function handleAvatarChange(e) {
+    const file = e.target.files[0];
+    if (!file || !user) return;
+    setUploading(true);
+    const path = `${user.id}/avatar.png`;
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+    if (uploadError) {
+      setSaveMsg('Ошибка загрузки фото: ' + uploadError.message);
+      setUploading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path);
+    const freshUrl = urlData.publicUrl + '?t=' + Date.now();
+    await supabase.from('profiles').upsert({ id: user.id, avatar_url: freshUrl });
+    setAvatarUrl(freshUrl);
+    setUploading(false);
+  }
+
+  async function handleSaveSettings(e) {
     e.preventDefault();
     setSaveMsg('');
     if (newNickname.trim() && newNickname !== nickname) {
@@ -61,15 +84,28 @@ async function handleSaveSettings(e) {
   if (user === undefined) return <div className="container"><p className="count">Загружаю...</p></div>;
   if (!user) { router.push('/login'); return null; }
 
+  const visibleWishes = showAllWishes ? wishes : wishes.slice(0, 4);
+
   return (
     <div className="container" style={{ maxWidth: 520 }}>
       <div style={{ background: 'var(--ink)', color: 'var(--paper-dim)', borderRadius: 8, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-        <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'var(--brass)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 16, color: 'var(--ink)' }}>
-          {nickname.charAt(0).toUpperCase()}
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          style={{ width: 52, height: 52, borderRadius: '50%', background: 'var(--brass)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 500, fontSize: 18, color: 'var(--ink)', cursor: 'pointer', overflow: 'hidden', flexShrink: 0 }}
+          title="Нажми, чтобы сменить фото"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="аватар" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            nickname.charAt(0).toUpperCase()
+          )}
         </div>
+        <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleAvatarChange} />
         <div>
           <p style={{ fontSize: 17, fontWeight: 500, margin: 0 }}>{nickname}</p>
-          <p style={{ fontSize: 12, color: 'var(--sage)', margin: '2px 0 0' }}>Только ты видишь эту страницу целиком</p>
+          <p style={{ fontSize: 12, color: 'var(--sage)', margin: '2px 0 0' }}>
+            {uploading ? 'Загружаю фото...' : 'Нажми на фото, чтобы сменить'}
+          </p>
         </div>
       </div>
 
@@ -86,12 +122,17 @@ async function handleSaveSettings(e) {
 
       <p style={{ fontSize: 13, fontWeight: 500, color: 'rgba(22,33,28,0.6)', margin: '0 0 8px' }}>Мои намерения</p>
       {wishes.length === 0 && <p style={{ fontSize: 13, color: 'rgba(22,33,28,0.45)' }}>Пока ничего не опубликовано.</p>}
-      {wishes.map(w => (
+      {visibleWishes.map(w => (
         <div className="card" key={w.id} style={{ marginBottom: 8 }}>
           <span className="tag">{w.tag}</span>
           <p style={{ fontSize: 13, margin: 0 }}>{w.text}</p>
         </div>
       ))}
+      {wishes.length > 4 && (
+        <button className="btn-ghost" style={{ width: '100%', marginBottom: 16 }} onClick={() => setShowAllWishes(!showAllWishes)}>
+          {showAllWishes ? 'Скрыть' : `Показать ещё ${wishes.length - 4}`}
+        </button>
+      )}
 
       <Link href="/journal">
         <button className="btn-ghost" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '16px 0' }}>
