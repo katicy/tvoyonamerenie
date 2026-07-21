@@ -47,8 +47,10 @@ export default function ProfilePage() {
     const file = e.target.files[0];
     if (!file || !user) return;
     setUploading(true);
+
+    const resizedBlob = await resizeImage(file, 300);
     const path = `${user.id}/avatar.png`;
-    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, resizedBlob, { upsert: true, contentType: 'image/jpeg' });
     if (uploadError) {
       setSaveMsg('Ошибка загрузки фото: ' + uploadError.message);
       setUploading(false);
@@ -59,6 +61,21 @@ export default function ProfilePage() {
     await supabase.from('profiles').upsert({ id: user.id, avatar_url: freshUrl });
     setAvatarUrl(freshUrl);
     setUploading(false);
+  }
+
+  function resizeImage(file, maxSize) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, 'image/jpeg', 0.85);
+      };
+      img.src = URL.createObjectURL(file);
+    });
   }
 
   async function handleSaveSettings(e) {
