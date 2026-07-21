@@ -121,7 +121,7 @@ export default function HomePage() {
                 <span className="tag">{w.tag}</span>
                 <p style={{ fontSize: 14, margin: '0 0 14px' }}>{w.text}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'rgba(22,33,28,0.5)' }}>
-                  <span>{w.author_name} · {timeAgo(w.created_at)}</span>
+                  <span><a href={`/profile/${w.user_id}`} style={{ color: 'inherit' }}>{w.author_name}</a> · {timeAgo(w.created_at)}</span>
                   <button
                     onClick={() => handleSupport(w.id, w.support_count)}
                     className="mono"
