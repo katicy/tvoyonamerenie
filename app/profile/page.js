@@ -9,6 +9,7 @@ export default function ProfilePage() {
   const [nickname, setNickname] = useState('');
   const [newNickname, setNewNickname] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [wishes, setWishes] = useState([]);
@@ -91,13 +92,27 @@ export default function ProfilePage() {
       setNickname(newNickname.trim());
     }
     if (newPassword.trim()) {
-      const { error } = await supabase.auth.updateUser({ password: newPassword.trim() });
+      if (!currentPassword.trim()) {
+        setSaveMsg('Введи текущий пароль, чтобы сменить его на новый');
+        return;
+      }
+      if (newPassword.length < 8 || !/[a-zA-Zа-яА-Я]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        setSaveMsg('Новый пароль должен быть не короче 8 символов и содержать буквы и цифры');
+        return;
+      }
+      const { error: checkError } = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword });
+      if (checkError) {
+        setSaveMsg('Текущий пароль указан неверно');
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) { setSaveMsg('Ошибка: ' + error.message); return; }
       setNewPassword('');
+      setCurrentPassword('');
     }
     setSaveMsg('Сохранено ✓');
   }
-
+  
   if (user === undefined) return <div className="container"><p className="count">Загружаю...</p></div>;
   if (!user) { router.push('/login'); return null; }
 
@@ -162,8 +177,10 @@ export default function ProfilePage() {
         <form onSubmit={handleSaveSettings}>
           <label style={{ fontSize: 12, color: 'rgba(22,33,28,0.5)', display: 'block', marginBottom: 6 }}>Имя</label>
           <input className="field" value={newNickname} onChange={e => setNewNickname(e.target.value)} />
+          <label style={{ fontSize: 12, color: 'rgba(22,33,28,0.5)', display: 'block', marginBottom: 6 }}>Текущий пароль</label>
+          <input className="field" type="password" placeholder="Нужен только если меняешь пароль" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
           <label style={{ fontSize: 12, color: 'rgba(22,33,28,0.5)', display: 'block', marginBottom: 6 }}>Новый пароль</label>
-          <input className="field" type="password" placeholder="Оставь пустым, если не меняешь" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          <input className="field" type="password" placeholder="Минимум 8 символов, буквы и цифры" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
           <button className="btn-brass" type="submit">Сохранить изменения</button>
           {saveMsg && <p style={{ fontSize: 12, color: 'var(--sage)', marginTop: 8 }}>{saveMsg}</p>}
         </form>
