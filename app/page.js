@@ -87,8 +87,11 @@ export default function HomePage() {
             Практика манифестации · сообщество
           </div>
           <h1 style={{ fontSize: 32, lineHeight: 1.18, margin: '0 0 14px' }}>
-            Намерение, записанное словами,<br />становится структурой.
+            Намерение, записанное словами,<br />становится реальностью.
           </h1>
+          <p style={{ fontSize: 15, color: 'rgba(237,230,211,0.7)', maxWidth: 480, margin: '0 auto 28px' }}>
+            Формулируй желания, веди дневник визуализаций, читай практики других — и наблюдай, как мысль оформляется в реальность.
+          </p>
           <form onSubmit={handleSubmit} style={{ display: 'flex', gap: 8, maxWidth: 520, margin: '0 auto' }}>
             <input
               className="field"
