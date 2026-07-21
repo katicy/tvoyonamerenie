@@ -19,15 +19,16 @@ export default function SignupPage() {
       setError('Заполни все поля');
       return;
     }
-    setLoading(true);
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+   setLoading(true);
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { nickname } },
+    });
     if (signUpError) {
       setError(signUpError.message);
       setLoading(false);
       return;
-    }
-    if (data.user) {
-      await supabase.from('profiles').insert({ id: data.user.id, nickname });
     }
     setLoading(false);
     router.push('/');
