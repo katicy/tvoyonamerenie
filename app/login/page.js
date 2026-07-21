@@ -32,6 +32,9 @@ export default function LoginPage() {
         <input className="field" type="password" placeholder="Пароль" value={password} onChange={e => setPassword(e.target.value)} />
         {error && <p className="error-text">{error}</p>}
         <button className="btn-brass" type="submit" disabled={loading}>{loading ? 'Входим...' : 'Войти'}</button>
+        <p style={{ fontSize: 13, marginTop: 10 }}>
+          <a href="/forgot-password" style={{ color: 'var(--brass-dim)' }}>Забыл(а) пароль?</a>
+        </p>
       </form>
       <p style={{ fontSize: 13, marginTop: 16 }}>
         Ещё нет аккаунта? <Link href="/signup" style={{ color: 'var(--brass-dim)' }}>Зарегистрироваться</Link>
