@@ -19,14 +19,22 @@ export default function SignupPage() {
       setError('Заполни все поля');
       return;
     }
-   setLoading(true);
+    setLoading(true);
+
+    const { data: existing } = await supabase.from('profiles').select('id').eq('nickname', nickname.trim()).maybeSingle();
+    if (existing) {
+      setError('Это имя уже занято, выбери другое');
+      setLoading(false);
+      return;
+    }
+
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { nickname } },
+      options: { data: { nickname: nickname.trim() } },
     });
     if (signUpError) {
-      setError(signUpError.message);
+      setError(signUpError.message.includes('Database error') ? 'Это имя уже занято, выбери другое' : signUpError.message);
       setLoading(false);
       return;
     }
