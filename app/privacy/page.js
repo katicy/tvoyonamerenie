@@ -42,14 +42,14 @@ export default function PrivacyPage() {
     },
     {
       title: '10. Контакты',
-      text: 'По вопросам, связанным с обработкой персональных данных, можно написать на: почта появится здесь',
+      text: 'По вопросам, связанным с обработкой персональных данных, можно написать на: kfedwork@gmail.com',
     },
   ];
 
   return (
     <div className="container" style={{ maxWidth: 640 }}>
       <h2>Политика конфиденциальности</h2>
-      <p style={{ fontSize: 13, color: 'rgba(22,33,28,0.5)', marginBottom: 28 }}>Дата обновления: впиши дату</p>
+      <p style={{ fontSize: 13, color: 'rgba(22,33,28,0.5)', marginBottom: 28 }}>Дата обновления: 24.07.2026</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {sections.map((s, i) => (
           <div key={i}>
