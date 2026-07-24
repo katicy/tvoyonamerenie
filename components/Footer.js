@@ -7,6 +7,7 @@ export default function Footer() {
         <span>© {new Date().getFullYear()} твоё намерение</span>
         <div style={{ display: 'flex', gap: 20 }}>
           <Link href="/rules" style={{ color: 'inherit' }}>Правила сообщества</Link>
+          <Link href="/privacy" style={{ color: 'inherit' }}>Конфиденциальность</Link>
         </div>
       </div>
     </div>
