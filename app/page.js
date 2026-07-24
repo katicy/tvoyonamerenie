@@ -19,6 +19,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [supportedIds, setSupportedIds] = useState(new Set());
   const [posting, setPosting] = useState(false);
 
@@ -26,7 +27,11 @@ export default function HomePage() {
     loadWishes();
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
-      if (data.user) loadSupports(data.user.id);
+      if (data.user) {
+        loadSupports(data.user.id);
+        supabase.from('profiles').select('is_admin').eq('id', data.user.id).single()
+          .then(({ data: profile }) => setIsAdmin(!!profile?.is_admin));
+      }
     });
   }, []);
 
@@ -79,6 +84,12 @@ export default function HomePage() {
     setWishes(wishes.map(w => (w.id === wishId ? { ...w, support_count: currentCount + 1 } : w)));
   }
 
+  async function handleDelete(wishId) {
+    if (!confirm('Удалить это намерение?')) return;
+    await supabase.from('wishes').delete().eq('id', wishId);
+    setWishes(wishes.filter(w => w.id !== wishId));
+  }
+
   return (
     <div>
       <div style={{ background: 'var(--ink)', color: 'var(--paper-dim)', padding: '56px 32px 44px' }}>
@@ -117,7 +128,16 @@ export default function HomePage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14 }}>
             {wishes.map(w => (
-              <div className="card" key={w.id}>
+              <div className="card" key={w.id} style={{ position: 'relative' }}>
+                {isAdmin && (
+                  <button
+                    onClick={() => handleDelete(w.id)}
+                    style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'rgba(22,33,28,0.35)' }}
+                    title="Удалить (админ)"
+                  >
+                    ✕
+                  </button>
+                )}
                 <span className="tag">{w.tag}</span>
                 <p style={{ fontSize: 14, margin: '0 0 14px' }}>{w.text}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'rgba(22,33,28,0.5)' }}>
