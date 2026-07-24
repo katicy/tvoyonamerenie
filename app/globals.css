@@ -17,6 +17,9 @@ body{
   font-family:'Work Sans', Arial, sans-serif;
   color:var(--ink);
   line-height:1.55;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 h1,h2,h3{
   font-family:'Fraunces', Georgia, serif;
