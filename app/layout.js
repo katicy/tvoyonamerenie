@@ -15,6 +15,7 @@ export default function RootLayout({ children }) {
         <Nav />
         <main style={{ flex: 1 }}>{children}</main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
