@@ -20,11 +20,18 @@ export default function CategoryPage({ params }) {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     loadTopics();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      if (data.user) {
+        supabase.from('profiles').select('is_admin').eq('id', data.user.id).single()
+          .then(({ data: profile }) => setIsAdmin(!!profile?.is_admin));
+      }
+    });
   }, []);
 
   async function loadTopics() {
@@ -60,6 +67,15 @@ export default function CategoryPage({ params }) {
     }
   }
 
+  async function handleDeleteTopic(topicId, e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm('Удалить эту тему вместе со всеми ответами?')) return;
+    await supabase.from('forum_replies').delete().eq('topic_id', topicId);
+    await supabase.from('forum_topics').delete().eq('id', topicId);
+    setTopics(topics.filter(t => t.id !== topicId));
+  }
+
   if (!cat) return <div className="container">Раздел не найден</div>;
 
   return (
@@ -85,11 +101,16 @@ export default function CategoryPage({ params }) {
       ) : (
         topics.map(t => (
           <Link href={`/forum/${params.category}/${t.id}`} key={t.id}>
-            <div style={{ padding: '14px 4px', borderBottom: '1px solid var(--line-dark)' }}>
-              <p style={{ fontSize: 14, fontWeight: 500, margin: '0 0 4px' }}>{t.title}</p>
-              <div style={{ fontSize: 11, color: 'rgba(22,33,28,0.5)' }}>
-                {t.author_name} · {timeAgo(t.created_at)} · {t.forum_replies?.[0]?.count || 0} ответов
+            <div style={{ padding: '14px 4px', borderBottom: '1px solid var(--line-dark)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 500, margin: '0 0 4px' }}>{t.title}</p>
+                <div style={{ fontSize: 11, color: 'rgba(22,33,28,0.5)' }}>
+                  {t.author_name} · {timeAgo(t.created_at)} · {t.forum_replies?.[0]?.count || 0} ответов
+                </div>
               </div>
+              {isAdmin && (
+                <button onClick={(e) => handleDeleteTopic(t.id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'rgba(22,33,28,0.35)' }} title="Удалить (админ)">✕</button>
+              )}
             </div>
           </Link>
         ))
